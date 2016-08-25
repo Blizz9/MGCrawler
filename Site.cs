@@ -5,32 +5,38 @@ using System.Xml;
 
 namespace MGCrawler
 {
-    internal class Platforms
+    internal class Site
     {
         private const string URL = "/browse/games/full,1/";
-        private static string CONTENTS_FILENAME = "platformlist.html";
 
         private string _path;
-        private string _fullURL;
+        private string _webURL;
 
-        internal List<NUPair> PlatformList;
+        internal bool IsDownloaded;
+        internal List<NUPair> Platforms;
 
-        internal Platforms()
+        internal Site()
         {
-            _path = Path.Combine(Program.MG_SITE_PATH, URL.TrimStart('/'), CONTENTS_FILENAME);
-            _fullURL = Program.MG_HOST + URL;
+            _path = Path.Combine(Program.MG_SITE_PATH, URL.Trim('/') + Program.EXTENSION);
+            _webURL = Program.MG_HOST + URL;
 
             if (File.Exists(_path))
+            {
+                IsDownloaded = true;
                 load();
+            }
             else
+            {
                 Console.WriteLine("Platforms: HTML does not exist");
+            }
         }
 
         private void load()
         {
-            PlatformList = new List<NUPair>();
+            Platforms = new List<NUPair>();
 
             string contents = File.ReadAllText(_path);
+            contents = contents.Replace("& ", "&amp; ");
 
             int platformsBegin = contents.IndexOf("<h4>Platform</h4>");
             int platformsEnd = contents.IndexOf("</div></div></div></td>", platformsBegin);
@@ -45,7 +51,7 @@ namespace MGCrawler
             foreach (XmlNode platformNode in xml.FirstChild.ChildNodes)
             {
                 XmlNode contentNode = platformNode.FirstChild.FirstChild;
-                PlatformList.Add(new NUPair() { Name = contentNode.InnerText, URL = contentNode.Attributes[0].Value });
+                Platforms.Add(new NUPair() { Name = contentNode.InnerText, URL = contentNode.Attributes[0].Value });
             }
 
             Console.WriteLine("Platforms: Loaded");
@@ -55,10 +61,14 @@ namespace MGCrawler
         {
             Console.Write("Platforms: Downloading...");
 
-            string contents = CURLWrapper.ReadMGURL(_fullURL);
+            string contents = CURLWrapper.ReadMGURL(_webURL);
+
+            Directory.CreateDirectory(Path.GetDirectoryName(_path));
             File.WriteAllText(_path, contents);
 
             Console.WriteLine("done");
+
+            IsDownloaded = true;
 
             load();
         }

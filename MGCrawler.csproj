@@ -45,9 +45,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="cURLWrapper.cs" />
+    <Compile Include="Game.cs" />
     <Compile Include="NUPair.cs" />
     <Compile Include="Platform.cs" />
-    <Compile Include="Platforms.cs" />
+    <Compile Include="PlatformPage.cs" />
+    <Compile Include="Site.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
