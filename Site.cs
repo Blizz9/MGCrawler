@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml;
+using Newtonsoft.Json;
 
 namespace MGCrawler
 {
     internal class Site
     {
-        private const string URL = "/browse/games/full,1/";
+        private const string URL = "/v1/platforms";
+        private const string PATH = "Platforms";
 
         private string _path;
-        private string _webURL;
 
         internal bool IsDownloaded;
-        internal List<NUPair> Platforms;
+        internal List<APIPlatform> APIPlatforms;
 
         internal Site()
         {
-            _path = Path.Combine(Program.MG_SITE_PATH, URL.Trim('/') + Program.EXTENSION);
-            _webURL = Program.MG_HOST + URL;
+            _path = Path.Combine(Program.MG_SITE_PATH, PATH.Trim('/') + Program.EXTENSION);
 
             if (File.Exists(_path))
             {
@@ -27,41 +26,23 @@ namespace MGCrawler
             }
             else
             {
-                Console.WriteLine("Platforms: HTML does not exist");
+                Console.WriteLine("API Platforms: JSON does not exist");
             }
         }
 
         private void load()
         {
-            Platforms = new List<NUPair>();
+            APIPlatforms = new List<APIPlatform>();
+            APIPlatforms.AddRange(JsonConvert.DeserializeObject<APIPlatforms>(File.ReadAllText(_path)).platforms);
 
-            string contents = File.ReadAllText(_path);
-            contents = contents.Replace("& ", "&amp; ");
-
-            int platformsBegin = contents.IndexOf("<h4>Platform</h4>");
-            int platformsEnd = contents.IndexOf("</div></div></div></td>", platformsBegin);
-            platformsBegin = contents.IndexOf("<div><div><a href=", platformsBegin);
-
-            contents = contents.Substring(platformsBegin, (platformsEnd - platformsBegin));
-            contents = "<platforms>" + contents + "</platforms>";
-
-            XmlDocument xml = new XmlDocument();
-            xml.LoadXml(contents);
-
-            foreach (XmlNode platformNode in xml.FirstChild.ChildNodes)
-            {
-                XmlNode contentNode = platformNode.FirstChild.FirstChild;
-                Platforms.Add(new NUPair() { Name = contentNode.InnerText, URL = contentNode.Attributes[0].Value });
-            }
-
-            Console.WriteLine("Platforms: Loaded");
+            Console.WriteLine("API Platforms: Loaded");
         }
 
         internal void Download()
         {
-            Console.Write("Platforms: Downloading...");
+            Console.Write("API Platforms: Downloading...");
 
-            string contents = CURLWrapper.ReadMGURL(_webURL);
+            string contents = Program.QueryAPI(URL);
 
             Directory.CreateDirectory(Path.GetDirectoryName(_path));
             File.WriteAllText(_path, contents);

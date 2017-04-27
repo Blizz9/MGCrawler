@@ -38,11 +38,11 @@ namespace MGCrawler
             _screenshotsPath = Path.Combine(Program.MG_SITE_PATH, url.Trim('/'), SCREENSHOTS_PATH + Program.EXTENSION);
             _coverArtPath = Path.Combine(Program.MG_SITE_PATH, url.Trim('/'), COVER_ART_PATH + Program.EXTENSION);
             _releaseInfoPath = Path.Combine(Program.MG_SITE_PATH, url.Trim('/'), RELEASE_INFO_PATH + Program.EXTENSION);
-            _webURL = Program.MG_HOST + url;
-            _creditsWebURL = Program.MG_HOST + url + "/" + CREDITS_PATH;
-            _screenshotsWebURL = Program.MG_HOST + url + "/" + SCREENSHOTS_PATH;
-            _coverArtWebURL = Program.MG_HOST + url + "/" + COVER_ART_PATH;
-            _releaseInfoWebURL = Program.MG_HOST + url + "/" + RELEASE_INFO_PATH;
+            _webURL = url;
+            _creditsWebURL = url + "/" + CREDITS_PATH;
+            _screenshotsWebURL = url + "/" + SCREENSHOTS_PATH;
+            _coverArtWebURL = url + "/" + COVER_ART_PATH;
+            _releaseInfoWebURL = url + "/" + RELEASE_INFO_PATH;
 
             if (File.Exists(_path) && File.Exists(_creditsPath) && File.Exists(_screenshotsPath) && File.Exists(_coverArtPath) && File.Exists(_releaseInfoPath))
             {
@@ -102,7 +102,7 @@ namespace MGCrawler
 
             Console.Write(Name + pageToDownload.Item1 + ": Downloading...");
 
-            string contents = CURLWrapper.ReadMGURL(pageToDownload.Item3);
+            string contents = "";// CURLWrapper.ReadMGURL(pageToDownload.Item3);
 
             Directory.CreateDirectory(Path.GetDirectoryName(pageToDownload.Item2));
             File.WriteAllText(pageToDownload.Item2, contents);

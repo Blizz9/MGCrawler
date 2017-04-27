@@ -1,36 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Xml;
+using System.Threading;
+using Newtonsoft.Json;
 
 namespace MGCrawler
 {
     internal class Platform
     {
-        private Random _random;
+        private const string URL_PREFIX = "/v1/games";
 
         private string _url;
-        private string _path;
-        private string _webURL;
-        private List<PlatformPage> _platformPages;
+        private string _pathPrefix;
 
         internal string Name;
-        internal bool IsMultiPaged;
         internal bool IsDownloaded;
-        internal List<NUPair> Games;
-        internal List<Tuple<string, string, string>> GamesEXT; // this is temporary
+        internal List<APIGame> APIGames;
 
-        internal Platform(string name, string url)
+        internal Platform(APIPlatform apiPlatform)
         {
-            _random = new Random();
+            Name = apiPlatform.platform_name;
+            _url = string.Format("{0}?platform={1}", URL_PREFIX, apiPlatform.platform_id);
+            _pathPrefix = Path.Combine(Program.MG_SITE_PATH, Name, "Page ");
 
-            Name = name;
-            _url = url;
-            _path = Path.Combine(Program.MG_SITE_PATH, url.Trim('/') + Program.EXTENSION);
-            _webURL = Program.MG_HOST + url;
-
-            if (File.Exists(_path))
+            if (File.Exists(_pathPrefix + "1" + Program.EXTENSION))
             {
                 IsDownloaded = true;
                 load();
@@ -41,97 +34,48 @@ namespace MGCrawler
             }
         }
 
-        internal bool ArePagesDownloaded
-        {
-            get { return (!_platformPages.Any(pp => !pp.IsDownloaded)); }
-        }
-
         private void load()
         {
-            Games = new List<NUPair>();
-            GamesEXT = new List<Tuple<string, string, string>>(); // this is temporary
+            APIGames = new List<APIGame>();
 
-            string contents = File.ReadAllText(_path);
-            contents = contents.Replace("& ", "&amp; ");
+            string directoryPath = _pathPrefix.Substring(0, _pathPrefix.LastIndexOf('\\'));
+            foreach (string path in Directory.GetFiles(directoryPath))
+                APIGames.AddRange(JsonConvert.DeserializeObject<APIGames>(File.ReadAllText(path)).games);
 
-            if (contents.Contains("The list below has been reduced"))
-            {
-                IsMultiPaged = true;
-                _platformPages = new List<PlatformPage>();
-
-                int gameCountBegin = contents.IndexOf("</sup>");
-                gameCountBegin = contents.IndexOf('(', gameCountBegin);
-                int gameCountEnd = contents.IndexOf(" games", gameCountBegin);
-
-                int gameCount = Convert.ToInt32(contents.Substring((gameCountBegin + 1), (gameCountEnd - gameCountBegin - 1)));
-                int pageCount = (int)Math.Ceiling((double)gameCount / 25);
-
-                for (int pageNumber = 0; pageNumber < pageCount; pageNumber++)
-                {
-                    string pageName = Name + " (page " + (pageNumber + 1) + ")";
-                    string pageURL = _url + "offset," + (pageNumber * 25) + "/so,0a/list-games/";
-                    _platformPages.Add(new PlatformPage(pageName, pageURL));
-                }
-
-                if (!_platformPages.Any(pp => !pp.IsDownloaded))
-                {
-                    foreach (PlatformPage platformPage in _platformPages)
-                    {
-                        foreach (NUPair game in platformPage.Games)
-                            Games.Add(game);
-
-                        foreach (var gameExt in platformPage.GamesEXT) // this is temporary
-                            GamesEXT.Add(gameExt); // this is temporary
-                    }
-
-                    Console.WriteLine(Name + ": Loaded");
-                }
-            }
-            else
-            {
-                int platformsBegin = contents.IndexOf("<h4>Game List</h4>");
-                platformsBegin = contents.IndexOf("<ul>", platformsBegin);
-                int platformsEnd = contents.IndexOf("</ul>", platformsBegin);
-
-                contents = contents.Substring(platformsBegin, (platformsEnd - platformsBegin + 5));
-
-                XmlDocument xml = new XmlDocument();
-                xml.LoadXml(contents);
-
-                foreach (XmlNode gameNode in xml.FirstChild.ChildNodes)
-                {
-                    XmlNode contentNode = gameNode.FirstChild;
-                    Games.Add(new NUPair() { Name = contentNode.FirstChild.InnerText, URL = contentNode.Attributes[0].Value });
-                }
-
-                Console.WriteLine(Name + ": Loaded");
-            }
+            Console.WriteLine(Name + ": Loaded");
         }
 
         internal void Download()
         {
-            Console.Write(Name + ": Downloading...");
+            int pageIndex = 0;
+            int gameCount = 0;
 
-            string contents = CURLWrapper.ReadMGURL(_webURL);
+            do
+            {
+                Console.Write(string.Format("{0} (page {1}): Downloading...", Name, (pageIndex + 1)));
 
-            Directory.CreateDirectory(Path.GetDirectoryName(_path));
-            File.WriteAllText(_path, contents);
+                string offsetSuffix = "&offset=" + (pageIndex * 100);
+                string contents = Program.QueryAPI(_url + offsetSuffix);
+                gameCount = JsonConvert.DeserializeObject<APIGames>(contents).games.Length;
 
-            Console.WriteLine("done");
+                if (gameCount > 0)
+                {
+                    string path = string.Format("{0}{1}{2}", _pathPrefix, (pageIndex + 1), Program.EXTENSION);
+                    Directory.CreateDirectory(Path.GetDirectoryName(path));
+                    File.WriteAllText((path), contents);
+
+                    pageIndex++;
+                }
+
+                Console.WriteLine("done");
+
+                Thread.Sleep(1250);
+            }
+            while (gameCount == 100);
 
             IsDownloaded = true;
 
             load();
-        }
-
-        internal void DownloadRandomPage()
-        {
-            List<PlatformPage> pagesToDownload = _platformPages.Where(pp => !pp.IsDownloaded).ToList();
-            PlatformPage pageToDownload = pagesToDownload[_random.Next(pagesToDownload.Count)];
-            pageToDownload.Download();
-
-            if (pagesToDownload.Count == 1)
-                load();
         }
     }
 }

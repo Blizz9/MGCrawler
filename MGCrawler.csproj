@@ -53,29 +53,16 @@
     <Compile Include="APIGames.cs" />
     <Compile Include="APIPlatform.cs" />
     <Compile Include="APIPlatforms.cs" />
-    <Compile Include="cURLWrapper.cs" />
     <Compile Include="Game.cs" />
-    <Compile Include="NUPair.cs" />
+    <Compile Include="LBPlatform.cs" />
+    <Compile Include="LBPlatformGame.cs" />
     <Compile Include="Platform.cs" />
-    <Compile Include="PlatformNew.cs" />
-    <Compile Include="PlatformPage.cs" />
     <Compile Include="Site.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SiteNew.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="libcurl.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="LibCurlShim.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Newtonsoft.Json.dll">
