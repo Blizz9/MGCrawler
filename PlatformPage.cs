@@ -13,6 +13,7 @@ namespace MGCrawler
 
         internal bool IsDownloaded;
         internal List<NUPair> Games;
+        internal List<Tuple<string, string, string>> GamesEXT; // this is temporary
 
         internal PlatformPage(string name, string url)
         {
@@ -34,11 +35,17 @@ namespace MGCrawler
         private void load()
         {
             Games = new List<NUPair>();
+            GamesEXT = new List<Tuple<string, string, string>>(); // this is temporary
 
             string contents = File.ReadAllText(_path);
             contents = contents.Replace("& ", "&amp; ");
+            contents = contents.Replace("&B", "&amp;B");
             contents = contents.Replace("&E", "&amp;E");
+            contents = contents.Replace("&I", "&amp;I");
             contents = contents.Replace("&M", "&amp;M");
+            contents = contents.Replace("&N", "&amp;N");
+            contents = contents.Replace("&P", "&amp;P");
+            contents = contents.Replace("&T", "&amp;T");
 
             int platformsBegin = contents.IndexOf("<tbody>");
             int platformsEnd = contents.IndexOf("</tbody>", platformsBegin);
@@ -52,6 +59,7 @@ namespace MGCrawler
             {
                 XmlNode contentNode = gameNode.FirstChild.FirstChild;
                 Games.Add(new NUPair() { Name = contentNode.InnerText, URL = contentNode.Attributes[0].Value });
+                GamesEXT.Add(new Tuple<string, string, string>(contentNode.InnerText, gameNode.ChildNodes[1].InnerText, gameNode.ChildNodes[2].InnerText)); // this is temporary
             }
 
             Console.WriteLine(_name + ": Loaded");

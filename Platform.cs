@@ -19,6 +19,7 @@ namespace MGCrawler
         internal bool IsMultiPaged;
         internal bool IsDownloaded;
         internal List<NUPair> Games;
+        internal List<Tuple<string, string, string>> GamesEXT; // this is temporary
 
         internal Platform(string name, string url)
         {
@@ -48,6 +49,7 @@ namespace MGCrawler
         private void load()
         {
             Games = new List<NUPair>();
+            GamesEXT = new List<Tuple<string, string, string>>(); // this is temporary
 
             string contents = File.ReadAllText(_path);
             contents = contents.Replace("& ", "&amp; ");
@@ -74,8 +76,13 @@ namespace MGCrawler
                 if (!_platformPages.Any(pp => !pp.IsDownloaded))
                 {
                     foreach (PlatformPage platformPage in _platformPages)
+                    {
                         foreach (NUPair game in platformPage.Games)
                             Games.Add(game);
+
+                        foreach (var gameExt in platformPage.GamesEXT) // this is temporary
+                            GamesEXT.Add(gameExt); // this is temporary
+                    }
 
                     Console.WriteLine(Name + ": Loaded");
                 }
