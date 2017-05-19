@@ -17,7 +17,7 @@ namespace MGCrawler
 
         internal Site()
         {
-            _path = Path.Combine(Program.MG_SITE_PATH, PATH.Trim('/') + Program.EXTENSION);
+            _path = Path.Combine(Program.MG_SITE_PATH, PATH + Program.EXTENSION);
 
             if (File.Exists(_path))
             {

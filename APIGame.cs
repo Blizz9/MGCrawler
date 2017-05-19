@@ -8,6 +8,7 @@
         public string moby_url;
         public int num_votes;
         public string official_url;
+        public APIRelease[] releases;
         public string title;
     }
 }

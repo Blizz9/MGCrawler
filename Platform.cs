@@ -13,12 +13,15 @@ namespace MGCrawler
         private string _url;
         private string _pathPrefix;
 
+        internal int ID;
         internal string Name;
         internal bool IsDownloaded;
         internal List<APIGame> APIGames;
+        internal List<Game> Games;
 
         internal Platform(APIPlatform apiPlatform)
         {
+            ID = apiPlatform.platform_id;
             Name = apiPlatform.platform_name;
             _url = string.Format("{0}?platform={1}", URL_PREFIX, apiPlatform.platform_id);
             _pathPrefix = Path.Combine(Program.MG_SITE_PATH, Name, "Page ");
@@ -30,19 +33,30 @@ namespace MGCrawler
             }
             else
             {
-                Console.WriteLine(Name + ": HTML does not exist");
+                Console.WriteLine(Name + ": JSON does not exist");
             }
         }
 
         private void load()
         {
             APIGames = new List<APIGame>();
+            Games = new List<Game>();
 
             string directoryPath = _pathPrefix.Substring(0, _pathPrefix.LastIndexOf('\\'));
             foreach (string path in Directory.GetFiles(directoryPath))
                 APIGames.AddRange(JsonConvert.DeserializeObject<APIGames>(File.ReadAllText(path)).games);
 
             Console.WriteLine(Name + ": Loaded");
+
+            foreach (APIGame apiGame in APIGames)
+            {
+                Game game = new Game(apiGame, ID, Name);
+
+                if (!game.IsDownloaded)
+                    game.Download();
+
+                Games.Add(game);
+            }
         }
 
         internal void Download()
